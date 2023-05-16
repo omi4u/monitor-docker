@@ -1,0 +1,47 @@
+global:
+  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+  #query_log_file: /data/prometheus/query.log
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - localhost:9093
+            # - alertmanager:9093
+
+rule_files:
+  - rules/*.yml
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+    - targets: ['localhost:9090'] ## IP Address of the localhost
+
+  - job_name: 'ec2_aws_node_exporter_discovery'
+    scrape_interval: 15s
+    ec2_sd_configs:
+      - region: ap-south-1
+        port: 9100
+    relabel_configs:
+      - source_labels: [__meta_ec2_tag_monitor]
+        regex: .*true.*
+        action: keep
+      - source_labels: [__meta_ec2_tag_Name]
+        target_label: instance
+      - source_labels: [__meta_ec2_private_ip]
+        target_label: privateip
+
+  - job_name: ecs_CAdvisor
+    scrape_interval: 15s
+    ec2_sd_configs:
+      - region: ap-south-1
+        port: 9200
+    relabel_configs:
+      - source_labels: [__meta_ec2_tag_monitor]
+        regex: .*ecs.*
+        action: keep
+      - source_labels: [__meta_ec2_tag_Name]
+        target_label: instance
+      - source_labels: [__meta_ec2_private_ip]
+        target_label: privateip
